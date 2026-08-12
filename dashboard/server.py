@@ -94,6 +94,7 @@ async def geocode_place(place_name: str) -> dict:
     RIVER_BBOXES = {
         "periyar": {"lat": 10.05, "lon": 76.60, "display_name": "Periyar River Basin, Kerala, India", "bbox": [76.10, 9.75, 77.10, 10.25]},
         "pamba": {"lat": 9.35, "lon": 76.65, "display_name": "Pamba River Basin, Kerala, India", "bbox": [76.35, 9.20, 77.05, 9.55]},
+        "pumba": {"lat": 9.35, "lon": 76.65, "display_name": "Pamba River Basin, Kerala, India", "bbox": [76.35, 9.20, 77.05, 9.55]},
         "bharathapuzha": {"lat": 10.80, "lon": 76.20, "display_name": "Bharathapuzha (Nila) River Basin, Kerala, India", "bbox": [75.90, 10.60, 76.70, 10.95]},
         "nila": {"lat": 10.80, "lon": 76.20, "display_name": "Bharathapuzha (Nila) River Basin, Kerala, India", "bbox": [75.90, 10.60, 76.70, 10.95]},
         "chaliyar": {"lat": 11.20, "lon": 76.00, "display_name": "Chaliyar River Basin, Kerala, India", "bbox": [75.75, 11.10, 76.30, 11.45]},
