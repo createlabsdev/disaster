@@ -74,40 +74,60 @@ def probability_to_rgba(prob_array, nodata=-9999.0, absolute=False, multiplier=1
     return rgba
 
 
-def probability_to_siltation_rgba(prob_array, nodata=-9999.0):
+def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None):
     """
     Convert a 2D probability array to a River Siltation & Sediment overlay.
-    Highlights river channels and sediment accumulation in Gold, Burnt Orange, and Crimson.
+    STRICTLY masks out land, displaying sediment colors ONLY across river channels, streams, lakes, and reservoirs.
     """
     h, w = prob_array.shape
     rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
     nodata_mask = (prob_array == nodata) | np.isnan(prob_array) | np.isinf(prob_array)
     p_raw = np.clip(prob_array, 0.0, 1.0)
-    
-    valid_vals = p_raw[~nodata_mask]
-    if len(valid_vals) == 0:
+
+    # Extract exact water channel & riverbed mask using Manning roughness or top flow channels
+    water_mask = None
+    if manning_path and os.path.exists(manning_path):
+        try:
+            with rasterio.open(manning_path) as src:
+                mn = src.read(1).astype(np.float32)
+                # Manning n <= 0.035 represents smooth open water channels & rivers
+                water_mask = (mn <= 0.035) & (mn > 0)
+        except Exception:
+            water_mask = None
+
+    if water_mask is None or np.sum(water_mask) == 0:
+        valid_vals = p_raw[~nodata_mask]
+        if len(valid_vals) == 0:
+            return rgba
+        # Fallback water channel approximation (top 15% valley channels)
+        q85 = float(np.percentile(valid_vals, 85))
+        water_mask = (p_raw >= q85)
+
+    # Strictly mask out all LAND pixels (100% Transparent)
+    combined_mask = (~nodata_mask) & water_mask
+    valid_water_vals = p_raw[combined_mask]
+
+    if len(valid_water_vals) == 0:
         return rgba
 
-    q25 = float(np.percentile(valid_vals, 25))
-    q50 = float(np.percentile(valid_vals, 50))
-    q75 = float(np.percentile(valid_vals, 75))
+    q33 = float(np.percentile(valid_water_vals, 33))
+    q66 = float(np.percentile(valid_water_vals, 66))
 
-    # Low Siltation Deposit → Bright Gold #f1c40f
-    mask1 = (~nodata_mask) & (p_raw > q25) & (p_raw <= q50)
-    rgba[mask1] = [241, 196, 15, 170]
+    # Class 1: Low Siltation Deposit → Bright Gold #f1c40f
+    mask1 = combined_mask & (p_raw <= q33)
+    rgba[mask1] = [241, 196, 15, 180]
 
-    # Moderate Siltation Deposit → Burnt Orange #e67e22
-    mask2 = (~nodata_mask) & (p_raw > q50) & (p_raw <= q75)
-    rgba[mask2] = [230, 126, 34, 195]
+    # Class 2: Moderate Siltation Deposit → Burnt Orange #e67e22
+    mask2 = combined_mask & (p_raw > q33) & (p_raw <= q66)
+    rgba[mask2] = [230, 126, 34, 210]
 
-    # Heavy Silt & Mud Accumulation → Deep Crimson #c0392b
-    mask3 = (~nodata_mask) & (p_raw > q75)
-    rgba[mask3] = [192, 57, 43, 220]
+    # Class 3: Heavy Silt & Mud Accumulation → Deep Crimson #c0392b
+    mask3 = combined_mask & (p_raw > q66)
+    rgba[mask3] = [192, 57, 43, 235]
 
-    # Clear / Nodata
-    rgba[p_raw <= q25] = [0, 0, 0, 0]
-    rgba[nodata_mask] = [0, 0, 0, 0]
+    # Land / Nodata: fully transparent
+    rgba[~combined_mask] = [0, 0, 0, 0]
 
     return rgba
 
@@ -123,7 +143,8 @@ def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multi
             nodata = src.nodata
 
     if siltation:
-        rgba = probability_to_siltation_rgba(prob, nodata=nodata)
+        manning_path = os.path.join(os.path.dirname(tif_path), 'manning_n.tif')
+        rgba = probability_to_siltation_rgba(prob, nodata=nodata, manning_path=manning_path)
     else:
         rgba = probability_to_rgba(prob, nodata=nodata, absolute=absolute, multiplier=multiplier)
 
