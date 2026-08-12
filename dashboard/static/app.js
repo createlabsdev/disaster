@@ -32,12 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mapTypeSelect) {
         mapTypeSelect.addEventListener('change', (e) => {
             const selectedType = e.target.value;
-            if (selectedType === 'active') {
-                if (terrainRiskLayer) map.removeLayer(terrainRiskLayer);
-                if (activeRiskLayer) activeRiskLayer.addTo(map);
-            } else {
-                if (activeRiskLayer) map.removeLayer(activeRiskLayer);
-                if (terrainRiskLayer) terrainRiskLayer.addTo(map);
+            if (activeRiskLayer) map.removeLayer(activeRiskLayer);
+            if (terrainRiskLayer) map.removeLayer(terrainRiskLayer);
+            if (siltationRiskLayer) map.removeLayer(siltationRiskLayer);
+
+            if (selectedType === 'active' && activeRiskLayer) {
+                activeRiskLayer.addTo(map);
+            } else if (selectedType === 'terrain' && terrainRiskLayer) {
+                terrainRiskLayer.addTo(map);
+            } else if (selectedType === 'siltation' && siltationRiskLayer) {
+                siltationRiskLayer.addTo(map);
             }
         });
     }
@@ -296,7 +300,12 @@ function initSearch() {
                     
                     // 4. Update UI
                     const t = Date.now();
-                    updateRiskMap(`${data.active_map_url}?t=${t}`, `${data.terrain_map_url}?t=${t}`, bounds=[[south, west], [north, east]]);
+                    updateRiskMap(
+                        `${data.active_map_url}?t=${t}`, 
+                        `${data.terrain_map_url}?t=${t}`, 
+                        data.siltation_map_url ? `${data.siltation_map_url}?t=${t}` : null,
+                        bounds=[[south, west], [north, east]]
+                    );
                     updateWeather(data.weather);
                     updateRiskGauge(data.active_risk_score, data.terrain_vulnerability, data.confidence_score);
                     
@@ -319,14 +328,12 @@ function initSearch() {
 
 let activeRiskLayer = null;
 let terrainRiskLayer = null;
+let siltationRiskLayer = null;
 
-function updateRiskMap(activeUrl, terrainUrl, bounds) {
-    if (activeRiskLayer) {
-        map.removeLayer(activeRiskLayer);
-    }
-    if (terrainRiskLayer) {
-        map.removeLayer(terrainRiskLayer);
-    }
+function updateRiskMap(activeUrl, terrainUrl, siltationUrl, bounds) {
+    if (activeRiskLayer) map.removeLayer(activeRiskLayer);
+    if (terrainRiskLayer) map.removeLayer(terrainRiskLayer);
+    if (siltationRiskLayer) map.removeLayer(siltationRiskLayer);
     
     if (terrainUrl) {
         terrainRiskLayer = L.imageOverlay(terrainUrl, bounds, {
@@ -341,6 +348,13 @@ function updateRiskMap(activeUrl, terrainUrl, bounds) {
             interactive: false
         });
     }
+
+    if (siltationUrl) {
+        siltationRiskLayer = L.imageOverlay(siltationUrl, bounds, {
+            opacity: 0.85,
+            interactive: false
+        });
+    }
     
     // Show the currently selected map type
     const selectEl = document.getElementById('map-type-select');
@@ -350,6 +364,8 @@ function updateRiskMap(activeUrl, terrainUrl, bounds) {
         activeRiskLayer.addTo(map);
     } else if (selectedType === 'terrain' && terrainRiskLayer) {
         terrainRiskLayer.addTo(map);
+    } else if (selectedType === 'siltation' && siltationRiskLayer) {
+        siltationRiskLayer.addTo(map);
     }
 }
 

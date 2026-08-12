@@ -74,6 +74,7 @@ class PredictResponse(BaseModel):
     bbox: list[float]
     terrain_map_url: str
     active_map_url: str
+    siltation_map_url: str
     overall_risk_score: float
     terrain_vulnerability: float
     active_risk_score: float
@@ -86,9 +87,28 @@ class PredictResponse(BaseModel):
 # ─────────────────────────── Helpers ───────────────────────────
 
 async def geocode_place(place_name: str) -> dict:
-    """Geocode a place name using Nominatim with strict Kerala targeting."""
-    raw_query = place_name.strip()
-    search_q = raw_query if "kerala" in raw_query.lower() else f"{raw_query}, Kerala, India"
+    """Geocode a place or river name using Nominatim with strict Kerala targeting."""
+    raw_query = place_name.strip().lower()
+
+    # Pre-configured major Kerala River Bounding Boxes for full river extent analysis
+    RIVER_BBOXES = {
+        "periyar": {"lat": 10.05, "lon": 76.60, "display_name": "Periyar River Basin, Kerala, India", "bbox": [76.10, 9.75, 77.10, 10.25]},
+        "pamba": {"lat": 9.35, "lon": 76.65, "display_name": "Pamba River Basin, Kerala, India", "bbox": [76.35, 9.20, 77.05, 9.55]},
+        "bharathapuzha": {"lat": 10.80, "lon": 76.20, "display_name": "Bharathapuzha (Nila) River Basin, Kerala, India", "bbox": [75.90, 10.60, 76.70, 10.95]},
+        "nila": {"lat": 10.80, "lon": 76.20, "display_name": "Bharathapuzha (Nila) River Basin, Kerala, India", "bbox": [75.90, 10.60, 76.70, 10.95]},
+        "chaliyar": {"lat": 11.20, "lon": 76.00, "display_name": "Chaliyar River Basin, Kerala, India", "bbox": [75.75, 11.10, 76.30, 11.45]},
+        "chalakudy": {"lat": 10.30, "lon": 76.40, "display_name": "Chalakudy River Basin, Kerala, India", "bbox": [76.15, 10.20, 76.75, 10.45]},
+        "muvattupuzha": {"lat": 9.98, "lon": 76.55, "display_name": "Muvattupuzha River Basin, Kerala, India", "bbox": [76.30, 9.80, 76.90, 10.10]},
+        "meenachil": {"lat": 9.68, "lon": 76.58, "display_name": "Meenachil River Basin, Kerala, India", "bbox": [76.40, 9.55, 76.85, 9.80]},
+        "kallada": {"lat": 9.00, "lon": 76.75, "display_name": "Kallada River Basin, Kerala, India", "bbox": [76.55, 8.90, 77.15, 9.15]}
+    }
+
+    for river_key, info in RIVER_BBOXES.items():
+        if river_key in raw_query:
+            print(f"  [RIVER SEARCH MATCHED] {info['display_name']}")
+            return info
+
+    search_q = place_name if "kerala" in raw_query else f"{place_name}, Kerala, India"
 
     url = "https://nominatim.openstreetmap.org/search"
     params = {
@@ -108,9 +128,8 @@ async def geocode_place(place_name: str) -> dict:
         data = []
 
     if not data:
-        # Fallback to direct raw query
         try:
-            params["q"] = raw_query
+            params["q"] = place_name
             async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
                 resp = await client.get(url, params=params, timeout=10.0)
                 data = resp.json()
@@ -120,7 +139,6 @@ async def geocode_place(place_name: str) -> dict:
     if not data:
         raise HTTPException(status_code=404, detail=f"Location '{place_name}' not found.")
 
-    # Find first result containing Kerala or inside Kerala BBox
     result = None
     for item in data:
         display = item.get("display_name", "").lower()
@@ -505,9 +523,10 @@ async def predict_risk(req: PredictRequest):
                 detail=f"Susceptibility baseline map not found for '{site_name}'."
             )
 
-    # Step 5: Convert TIF to colorized PNGs (Terrain vs Active)
+    # Step 5: Convert TIF to colorized PNGs (Terrain vs Active vs Siltation)
     terrain_png_path = RISK_MAP_DIR / site_name / "terrain_map_overlay.png"
     active_png_path = RISK_MAP_DIR / site_name / "active_map_overlay.png"
+    siltation_png_path = RISK_MAP_DIR / site_name / "siltation_map_overlay.png"
 
     # Step 6: Compute risk scores
     terrain_score, confidence = compute_overall_risk_score(str(tif_path))
@@ -522,9 +541,13 @@ async def predict_risk(req: PredictRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Terrain PNG failed: {str(e)}")
 
-    # Active Map needs to be regenerated if weather changes, but we append forecast_hours
-    # to site_name, so we can just always generate it to be safe, or cache by severity.
-    # To be safe and since it's fast, let's always regenerate active_map.png.
+    if not siltation_png_path.exists():
+        print(f"  Generating River Siltation & Sediment Map...")
+        try:
+            convert_tif_to_png(str(tif_path), str(siltation_png_path), siltation=True)
+        except Exception as e:
+            print(f"  [WARNING] Siltation PNG failed: {e}")
+
     print(f"  Generating Active Risk Map (severity={weather_severity:.2f})...")
     try:
         convert_tif_to_png(str(tif_path), str(active_png_path), absolute=True, multiplier=weather_severity)
@@ -544,6 +567,7 @@ async def predict_risk(req: PredictRequest):
         bbox=[west, south, east, north],
         terrain_map_url=f"/api/risk-map/{site_name}/terrain",
         active_map_url=f"/api/risk-map/{site_name}/active",
+        siltation_map_url=f"/api/risk-map/{site_name}/siltation",
         overall_risk_score=round(active_score, 1),
         terrain_vulnerability=round(terrain_score, 1),
         active_risk_score=round(active_score, 1),
@@ -557,7 +581,7 @@ async def predict_risk(req: PredictRequest):
 @app.get("/api/risk-map/{site_name}/{map_type}")
 async def get_risk_map(site_name: str, map_type: str):
     """Serve a previously generated colorized risk map PNG."""
-    if map_type not in ["terrain", "active"]:
+    if map_type not in ["terrain", "active", "siltation"]:
         raise HTTPException(status_code=400, detail="Invalid map type")
         
     png_path = RISK_MAP_DIR / site_name / f"{map_type}_map_overlay.png"

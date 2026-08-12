@@ -74,27 +74,47 @@ def probability_to_rgba(prob_array, nodata=-9999.0, absolute=False, multiplier=1
     return rgba
 
 
-def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multiplier=1.0):
+def probability_to_siltation_rgba(prob_array, nodata=-9999.0):
+    """
+    Convert a 2D probability array to a River Siltation & Sediment overlay.
+    Highlights river channels and sediment accumulation in Gold, Burnt Orange, and Crimson.
+    """
+    h, w = prob_array.shape
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+
+    nodata_mask = (prob_array == nodata) | np.isnan(prob_array) | np.isinf(prob_array)
+    p_raw = np.clip(prob_array, 0.0, 1.0)
+    
+    valid_vals = p_raw[~nodata_mask]
+    if len(valid_vals) == 0:
+        return rgba
+
+    q40 = float(np.percentile(valid_vals, 40))
+    q70 = float(np.percentile(valid_vals, 70))
+    q90 = float(np.percentile(valid_vals, 90))
+
+    # Low Siltation → Gold #d4ac0d
+    mask1 = (~nodata_mask) & (p_raw > q40) & (p_raw <= q70)
+    rgba[mask1] = [212, 172, 13, 140]
+
+    # Moderate Siltation Deposit → Burnt Orange #d35400
+    mask2 = (~nodata_mask) & (p_raw > q70) & (p_raw <= q90)
+    rgba[mask2] = [211, 84, 0, 175]
+
+    # Heavy Silt & Mud Accumulation → Deep Crimson #900c3f
+    mask3 = (~nodata_mask) & (p_raw > q90)
+    rgba[mask3] = [144, 12, 63, 210]
+
+    # Nodata / Clear: transparent
+    rgba[p_raw <= q40] = [0, 0, 0, 0]
+    rgba[nodata_mask] = [0, 0, 0, 0]
+
+    return rgba
+
+
+def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multiplier=1.0, siltation=False):
     """
     Read a single-band GeoTIFF and write a colorized RGBA PNG.
-
-    Parameters
-    ----------
-    tif_path : str
-        Path to the input GeoTIFF (single-band, values 0.0–1.0)
-    png_path : str
-        Path to the output PNG
-    nodata : float
-        Nodata value in the GeoTIFF
-    absolute : bool
-        If true, use fixed color thresholds (0.2, 0.4, 0.6, 0.8)
-    multiplier : float
-        Multiply raw values by this factor before coloring (used with absolute=True)
-
-    Returns
-    -------
-    bbox : tuple (west, south, east, north)
-        Geographic bounding box of the raster
     """
     with rasterio.open(tif_path) as src:
         prob = src.read(1).astype(np.float32)
@@ -102,7 +122,10 @@ def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multi
         if src.nodata is not None:
             nodata = src.nodata
 
-    rgba = probability_to_rgba(prob, nodata=nodata, absolute=absolute, multiplier=multiplier)
+    if siltation:
+        rgba = probability_to_siltation_rgba(prob, nodata=nodata)
+    else:
+        rgba = probability_to_rgba(prob, nodata=nodata, absolute=absolute, multiplier=multiplier)
 
     img = Image.fromarray(rgba, mode='RGBA')
     os.makedirs(os.path.dirname(png_path) or '.', exist_ok=True)
@@ -110,9 +133,6 @@ def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multi
 
     bbox = (bounds.left, bounds.bottom, bounds.right, bounds.top)
     print(f"  Converted {tif_path} → {png_path}")
-    print(f"  BBox: {bbox}")
-    print(f"  Size: {img.width}x{img.height}")
-
     return bbox
 
 
