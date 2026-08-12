@@ -31,10 +31,13 @@ def main():
     # Init GEE
     try:
         ee.Initialize(project='flood-502410')
-    except Exception:
-        print("[INFO] Authenticating Earth Engine...")
-        ee.Authenticate()
-        ee.Initialize(project='flood-502410')
+    except Exception as e:
+        print(f"[INFO] GEE Initialize failed: {e}. Attempting fallback...")
+        try:
+            ee.Initialize()
+        except Exception as err:
+            print(f"ERROR: Google Earth Engine credentials not initialized on server: {err}")
+            sys.exit(1)
 
     out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output', site)
     os.makedirs(out_dir, exist_ok=True)

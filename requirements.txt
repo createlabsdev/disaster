@@ -8,3 +8,5 @@ Pillow>=9.5.0
 xgboost>=1.7.0
 scikit-learn>=1.2.0
 joblib>=1.2.0
+earthengine-api>=0.1.350
+geemap>=0.20.0
