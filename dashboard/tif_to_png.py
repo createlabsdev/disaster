@@ -86,38 +86,58 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
     nodata_mask = (prob_array == nodata) | np.isnan(prob_array) | np.isinf(prob_array)
     p_raw = np.clip(prob_array, 0.0, 1.0)
 
-    # Extract exact water channel & riverbed mask using Manning roughness or top flow channels
+    site_dir = os.path.dirname(manning_path) if manning_path else None
+    dem_path = os.path.join(site_dir, 'dem_ref.tif') if site_dir else None
+
     water_mask = None
+
+    # Primary riverbed mask: Lowest 10% elevation valley bottom from DEM
+    if dem_path and os.path.exists(dem_path):
+        try:
+            with rasterio.open(dem_path) as src:
+                dem = src.read(1).astype(np.float32)
+                q10 = float(np.percentile(dem[~nodata_mask], 10))
+                water_mask = (dem <= q10) & (~nodata_mask)
+        except Exception:
+            water_mask = None
+
+    # Refine using Manning roughness if available
     if manning_path and os.path.exists(manning_path):
         try:
             with rasterio.open(manning_path) as src:
                 mn = src.read(1).astype(np.float32)
-                # Manning n <= 0.020 represents open water channels & rivers
-                raw_water = (mn <= 0.020) & (mn > 0)
-                
-                # Morphological component filter: eliminate isolated town noise dots (< 8 connected pixels)
-                labeled, num_features = label(raw_water)
-                sizes = np.bincount(labeled.ravel())
-                water_mask = np.zeros_like(raw_water, dtype=bool)
-                for i in range(1, num_features + 1):
-                    if sizes[i] >= 8:
-                        water_mask |= (labeled == i)
+                raw_water = (mn <= 0.025) & (mn > 0)
+                if np.sum(raw_water) > 10:
+                    if water_mask is not None:
+                        water_mask = water_mask | raw_water
+                    else:
+                        water_mask = raw_water
         except Exception:
-            water_mask = None
+            pass
 
     if water_mask is None or np.sum(water_mask) == 0:
         valid_vals = p_raw[~nodata_mask]
         if len(valid_vals) == 0:
             return rgba
-        # Fallback water channel approximation (top 5% valley channels)
-        q95 = float(np.percentile(valid_vals, 95))
-        raw_water = (p_raw >= q95)
+        q90 = float(np.percentile(valid_vals, 90))
+        raw_water = (p_raw >= q90)
         labeled, num_features = label(raw_water)
         sizes = np.bincount(labeled.ravel())
         water_mask = np.zeros_like(raw_water, dtype=bool)
         for i in range(1, num_features + 1):
             if sizes[i] >= 8:
                 water_mask |= (labeled == i)
+
+    # Filter connected components to eliminate isolated dots
+    labeled, num_features = label(water_mask)
+    if num_features > 0:
+        sizes = np.bincount(labeled.ravel())
+        filtered_mask = np.zeros_like(water_mask, dtype=bool)
+        for i in range(1, num_features + 1):
+            if sizes[i] >= 8:
+                filtered_mask |= (labeled == i)
+        if np.sum(filtered_mask) > 0:
+            water_mask = filtered_mask
 
     # Strictly mask out all LAND pixels (100% Transparent)
     combined_mask = (~nodata_mask) & water_mask
@@ -131,15 +151,15 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
 
     # Class 1: Low Siltation Deposit → Bright Gold #f1c40f
     mask1 = combined_mask & (p_raw <= q33)
-    rgba[mask1] = [241, 196, 15, 180]
+    rgba[mask1] = [241, 196, 15, 200]
 
     # Class 2: Moderate Siltation Deposit → Burnt Orange #e67e22
     mask2 = combined_mask & (p_raw > q33) & (p_raw <= q66)
-    rgba[mask2] = [230, 126, 34, 210]
+    rgba[mask2] = [230, 126, 34, 220]
 
     # Class 3: Heavy Silt & Mud Accumulation → Deep Crimson #c0392b
     mask3 = combined_mask & (p_raw > q66)
-    rgba[mask3] = [192, 57, 43, 235]
+    rgba[mask3] = [192, 57, 43, 240]
 
     # Land / Nodata: fully transparent
     rgba[~combined_mask] = [0, 0, 0, 0]
