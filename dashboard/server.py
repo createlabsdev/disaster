@@ -86,36 +86,68 @@ class PredictResponse(BaseModel):
 # ─────────────────────────── Helpers ───────────────────────────
 
 async def geocode_place(place_name: str) -> dict:
-    """Geocode a place name using Nominatim."""
+    """Geocode a place name using Nominatim with strict Kerala targeting."""
+    raw_query = place_name.strip()
+    search_q = raw_query if "kerala" in raw_query.lower() else f"{raw_query}, Kerala, India"
+
     url = "https://nominatim.openstreetmap.org/search"
     params = {
-        "q": place_name,
+        "q": search_q,
         "format": "json",
-        "limit": 1,
+        "limit": 5,
         "countrycodes": "in",
     }
-    headers = {"User-Agent": "KeralaDisasterDashboard/1.0"}
+    headers = {"User-Agent": "KeralaDisasterDashboard/1.0 (contact@iiitkottayam.ac.in)"}
 
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(url, params=params, headers=headers, timeout=15.0)
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
+            resp = await client.get(url, params=params, timeout=10.0)
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception:
+        data = []
+
+    if not data:
+        # Fallback to direct raw query
+        try:
+            params["q"] = raw_query
+            async with httpx.AsyncClient(headers=headers, follow_redirects=True) as client:
+                resp = await client.get(url, params=params, timeout=10.0)
+                data = resp.json()
+        except Exception:
+            data = []
 
     if not data:
         raise HTTPException(status_code=404, detail=f"Location '{place_name}' not found.")
 
-    result = data[0]
-    display_name = result.get("display_name", "")
-    
-    # Strictly validate that the returned location is in Kerala
-    if "kerala" not in display_name.lower():
+    # Find first result containing Kerala or inside Kerala BBox
+    result = None
+    for item in data:
+        display = item.get("display_name", "").lower()
+        if "kerala" in display:
+            result = item
+            break
+
+    if not result:
+        for item in data:
+            try:
+                lat_f = float(item["lat"])
+                lon_f = float(item["lon"])
+                if 8.0 <= lat_f <= 13.0 and 74.5 <= lon_f <= 78.0:
+                    result = item
+                    break
+            except (ValueError, KeyError):
+                continue
+
+    if not result:
         raise HTTPException(
             status_code=400, 
-            detail="Please search for a location within Kerala."
+            detail=f"Location '{place_name}' could not be matched within Kerala."
         )
 
     lat = float(result["lat"])
     lon = float(result["lon"])
+    display_name = result.get("display_name", "")
 
     return {"lat": lat, "lon": lon, "display_name": display_name}
 
