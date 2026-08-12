@@ -10,6 +10,7 @@ import numpy as np
 import rasterio
 from PIL import Image
 import os
+from scipy.ndimage import label
 
 
 def probability_to_rgba(prob_array, nodata=-9999.0, absolute=False, multiplier=1.0):
@@ -91,8 +92,16 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
         try:
             with rasterio.open(manning_path) as src:
                 mn = src.read(1).astype(np.float32)
-                # Manning n <= 0.025 strictly isolates open river water channels & reservoirs
-                water_mask = (mn <= 0.025) & (mn > 0)
+                # Manning n <= 0.020 represents open water channels & rivers
+                raw_water = (mn <= 0.020) & (mn > 0)
+                
+                # Morphological component filter: eliminate isolated town noise dots (< 8 connected pixels)
+                labeled, num_features = label(raw_water)
+                sizes = np.bincount(labeled.ravel())
+                water_mask = np.zeros_like(raw_water, dtype=bool)
+                for i in range(1, num_features + 1):
+                    if sizes[i] >= 8:
+                        water_mask |= (labeled == i)
         except Exception:
             water_mask = None
 
@@ -102,7 +111,13 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
             return rgba
         # Fallback water channel approximation (top 5% valley channels)
         q95 = float(np.percentile(valid_vals, 95))
-        water_mask = (p_raw >= q95)
+        raw_water = (p_raw >= q95)
+        labeled, num_features = label(raw_water)
+        sizes = np.bincount(labeled.ravel())
+        water_mask = np.zeros_like(raw_water, dtype=bool)
+        for i in range(1, num_features + 1):
+            if sizes[i] >= 8:
+                water_mask |= (labeled == i)
 
     # Strictly mask out all LAND pixels (100% Transparent)
     combined_mask = (~nodata_mask) & water_mask
