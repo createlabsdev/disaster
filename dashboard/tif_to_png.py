@@ -91,44 +91,25 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
 
     water_mask = None
 
-    # Primary riverbed mask: Lowest 10% elevation valley bottom from DEM
-    if dem_path and os.path.exists(dem_path):
-        try:
-            with rasterio.open(dem_path) as src:
-                dem = src.read(1).astype(np.float32)
-                q10 = float(np.percentile(dem[~nodata_mask], 10))
-                water_mask = (dem <= q10) & (~nodata_mask)
-        except Exception:
-            water_mask = None
-
-    # Refine using Manning roughness if available
+    # Use Manning roughness to precisely isolate water bodies
+    # Open water typically ranges from 0.025 to 0.040. 
+    # Paved roads are < 0.020 (e.g. 0.011-0.015). We must exclude them.
     if manning_path and os.path.exists(manning_path):
         try:
             with rasterio.open(manning_path) as src:
                 mn = src.read(1).astype(np.float32)
-                raw_water = (mn <= 0.025) & (mn > 0)
+                raw_water = (mn >= 0.025) & (mn <= 0.040)
                 if np.sum(raw_water) > 10:
-                    if water_mask is not None:
-                        water_mask = water_mask | raw_water
-                    else:
-                        water_mask = raw_water
+                    water_mask = raw_water
         except Exception:
             pass
 
+    # If we have no reliable water mask, return empty. 
+    # Do not fallback to probability percentiles, as this falsely flags roads and high-risk slopes as "rivers".
     if water_mask is None or np.sum(water_mask) == 0:
-        valid_vals = p_raw[~nodata_mask]
-        if len(valid_vals) == 0:
-            return rgba
-        q90 = float(np.percentile(valid_vals, 90))
-        raw_water = (p_raw >= q90)
-        labeled, num_features = label(raw_water)
-        sizes = np.bincount(labeled.ravel())
-        water_mask = np.zeros_like(raw_water, dtype=bool)
-        for i in range(1, num_features + 1):
-            if sizes[i] >= 8:
-                water_mask |= (labeled == i)
+        return rgba
 
-    # Filter connected components to eliminate isolated dots
+    # Filter connected components to eliminate isolated noise dots
     labeled, num_features = label(water_mask)
     if num_features > 0:
         sizes = np.bincount(labeled.ravel())
