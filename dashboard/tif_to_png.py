@@ -91,8 +91,8 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
         try:
             with rasterio.open(manning_path) as src:
                 mn = src.read(1).astype(np.float32)
-                # Manning n <= 0.035 represents smooth open water channels & rivers
-                water_mask = (mn <= 0.035) & (mn > 0)
+                # Manning n <= 0.025 strictly isolates open river water channels & reservoirs
+                water_mask = (mn <= 0.025) & (mn > 0)
         except Exception:
             water_mask = None
 
@@ -100,9 +100,9 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
         valid_vals = p_raw[~nodata_mask]
         if len(valid_vals) == 0:
             return rgba
-        # Fallback water channel approximation (top 15% valley channels)
-        q85 = float(np.percentile(valid_vals, 85))
-        water_mask = (p_raw >= q85)
+        # Fallback water channel approximation (top 5% valley channels)
+        q95 = float(np.percentile(valid_vals, 95))
+        water_mask = (p_raw >= q95)
 
     # Strictly mask out all LAND pixels (100% Transparent)
     combined_mask = (~nodata_mask) & water_mask
