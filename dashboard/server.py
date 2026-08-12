@@ -579,13 +579,30 @@ async def predict_risk(req: PredictRequest):
 
 @app.get("/api/risk-map/{site_name}/{map_type}")
 async def get_risk_map(site_name: str, map_type: str):
-    """Serve a previously generated colorized risk map PNG."""
+    """Serve a colorized risk map PNG."""
     if map_type not in ["terrain", "active", "siltation"]:
         raise HTTPException(status_code=400, detail="Invalid map type")
         
+    tif_path = RISK_MAP_DIR / site_name / "susceptibility_xgb.tif"
     png_path = RISK_MAP_DIR / site_name / f"{map_type}_map_overlay.png"
+
+    # Fallback to base folder tif if exact tif missing
+    if not tif_path.exists():
+        base_name = site_name.split("_")[0]
+        fallback_tif = RISK_MAP_DIR / f"{base_name}_0h" / "susceptibility_xgb.tif"
+        if fallback_tif.exists():
+            tif_path = fallback_tif
+
+    # For siltation, force fresh generation using strict water channel mask (manning <= 0.020)
+    if map_type == "siltation" and tif_path.exists():
+        try:
+            convert_tif_to_png(str(tif_path), str(png_path), siltation=True)
+        except Exception as e:
+            print(f"  [INFO] Dynamic siltation PNG regeneration error: {e}")
+
     if not png_path.exists():
         raise HTTPException(status_code=404, detail=f"Risk map not found for '{site_name}'")
+
     return FileResponse(
         str(png_path), 
         media_type="image/png", 
