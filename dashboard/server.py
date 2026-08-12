@@ -140,6 +140,7 @@ async def fetch_weather(lat: float, lon: float, api_key: str | None = None, fore
         params = {
             "latitude": lat,
             "longitude": lon,
+            "current": "temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
             "hourly": "temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
             "daily": "precipitation_sum",
             "timezone": "Asia/Kolkata",
@@ -149,29 +150,38 @@ async def fetch_weather(lat: float, lon: float, api_key: str | None = None, fore
             resp.raise_for_status()
             data = resp.json()
 
+        current = data.get("current", {})
         hourly = data.get("hourly", {})
         daily = data.get("daily", {})
         
         times = hourly.get("time", [])
-        idx = max(0, min(forecast_hours, len(times) - 1)) if times else 0
+        current_time = current.get("time")
+        base_idx = times.index(current_time) if (current_time and current_time in times) else 0
 
-        # Extract 24-hour window around target hour for Hydrological Memory
-        precip_arr = hourly.get("precipitation", [])
-        start_idx = max(0, idx - 12)
-        end_idx = min(len(precip_arr), idx + 12) if precip_arr else 0
-        window_precip = precip_arr[start_idx:end_idx] if precip_arr else []
-        peak_rain = max(window_precip) if window_precip else 0.0
+        if forecast_hours == 0 and current:
+            temp = current.get("temperature_2m", 26.0)
+            humidity = current.get("relative_humidity_2m", 85.0)
+            rain_instant = current.get("precipitation", 0.0)
+            wind = current.get("wind_speed_10m", 5.0)
+            wmo_code = int(current.get("weather_code", 2))
+            peak_rain = max(rain_instant, _get_val(hourly.get("precipitation"), base_idx, 0.0))
+        else:
+            idx = max(0, min(base_idx + forecast_hours, len(times) - 1)) if times else 0
+            precip_arr = hourly.get("precipitation", [])
+            start_idx = max(0, idx - 12)
+            end_idx = min(len(precip_arr), idx + 12) if precip_arr else 0
+            window_precip = precip_arr[start_idx:end_idx] if precip_arr else []
+            peak_rain = max(window_precip) if window_precip else 0.0
+
+            temp = _get_val(hourly.get("temperature_2m"), idx, 26.0)
+            humidity = _get_val(hourly.get("relative_humidity_2m"), idx, 85.0)
+            rain_instant = _get_val(precip_arr, idx, 0.0)
+            wind = _get_val(hourly.get("wind_speed_10m"), idx, 5.0)
+            wmo_code = int(_get_val(hourly.get("weather_code"), idx, 2))
 
         # Daily total
         daily_sum_arr = daily.get("precipitation_sum", [])
-        day_idx = max(0, min(idx // 24, len(daily_sum_arr) - 1)) if daily_sum_arr else 0
-        daily_total = _get_val(daily_sum_arr, day_idx, 0.0)
-
-        temp = _get_val(hourly.get("temperature_2m"), idx, 26.0)
-        humidity = _get_val(hourly.get("relative_humidity_2m"), idx, 85.0)
-        rain_instant = _get_val(precip_arr, idx, 0.0)
-        wind = _get_val(hourly.get("wind_speed_10m"), idx, 5.0)
-        wmo_code = int(_get_val(hourly.get("weather_code"), idx, 2))
+        daily_total = _get_val(daily_sum_arr, 0, 0.0)
 
         # WMO weather code → description
         wmo_descriptions = {
