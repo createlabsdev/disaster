@@ -89,24 +89,24 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0):
     if len(valid_vals) == 0:
         return rgba
 
-    q40 = float(np.percentile(valid_vals, 40))
-    q70 = float(np.percentile(valid_vals, 70))
-    q90 = float(np.percentile(valid_vals, 90))
+    q25 = float(np.percentile(valid_vals, 25))
+    q50 = float(np.percentile(valid_vals, 50))
+    q75 = float(np.percentile(valid_vals, 75))
 
-    # Low Siltation → Gold #d4ac0d
-    mask1 = (~nodata_mask) & (p_raw > q40) & (p_raw <= q70)
-    rgba[mask1] = [212, 172, 13, 140]
+    # Low Siltation Deposit → Bright Gold #f1c40f
+    mask1 = (~nodata_mask) & (p_raw > q25) & (p_raw <= q50)
+    rgba[mask1] = [241, 196, 15, 170]
 
-    # Moderate Siltation Deposit → Burnt Orange #d35400
-    mask2 = (~nodata_mask) & (p_raw > q70) & (p_raw <= q90)
-    rgba[mask2] = [211, 84, 0, 175]
+    # Moderate Siltation Deposit → Burnt Orange #e67e22
+    mask2 = (~nodata_mask) & (p_raw > q50) & (p_raw <= q75)
+    rgba[mask2] = [230, 126, 34, 195]
 
-    # Heavy Silt & Mud Accumulation → Deep Crimson #900c3f
-    mask3 = (~nodata_mask) & (p_raw > q90)
-    rgba[mask3] = [144, 12, 63, 210]
+    # Heavy Silt & Mud Accumulation → Deep Crimson #c0392b
+    mask3 = (~nodata_mask) & (p_raw > q75)
+    rgba[mask3] = [192, 57, 43, 220]
 
-    # Nodata / Clear: transparent
-    rgba[p_raw <= q40] = [0, 0, 0, 0]
+    # Clear / Nodata
+    rgba[p_raw <= q25] = [0, 0, 0, 0]
     rgba[nodata_mask] = [0, 0, 0, 0]
 
     return rgba

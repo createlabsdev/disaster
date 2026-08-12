@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (selectedType === 'siltation' && siltationRiskLayer) {
                 siltationRiskLayer.addTo(map);
             }
+            updateLegend(selectedType);
         });
     }
     
@@ -366,6 +367,33 @@ function updateRiskMap(activeUrl, terrainUrl, siltationUrl, bounds) {
         terrainRiskLayer.addTo(map);
     } else if (selectedType === 'siltation' && siltationRiskLayer) {
         siltationRiskLayer.addTo(map);
+    }
+    updateLegend(selectedType);
+}
+
+function updateLegend(mapType) {
+    const legendDiv = document.querySelector('.info.legend');
+    if (!legendDiv) return;
+
+    if (mapType === 'siltation') {
+        legendDiv.innerHTML = `
+            <h4 style="margin-bottom:6px; color:#f1c40f;">Silt & Mud Deposit</h4>
+            <div class="legend-item"><span style="background: rgba(241, 196, 15, 0.9);"></span> Low Siltation</div>
+            <div class="legend-item"><span style="background: rgba(230, 126, 34, 0.9);"></span> Moderate Deposit (25-40%)</div>
+            <div class="legend-item"><span style="background: rgba(192, 57, 43, 0.9);"></span> Severe Siltation (>45%)</div>
+            <div style="margin-top:6px; font-size:0.72rem; color:#bbb; max-width:160px; line-height:1.2;">
+                ⚠️ <i>High siltation reduces river carrying capacity & causes early overflow.</i>
+            </div>
+        `;
+    } else {
+        legendDiv.innerHTML = `
+            <h4>Risk Level</h4>
+            <div class="legend-item"><span style="background: rgba(46, 204, 113, 0.9);"></span> Very Low</div>
+            <div class="legend-item"><span style="background: rgba(168, 224, 108, 0.9);"></span> Low</div>
+            <div class="legend-item"><span style="background: rgba(241, 196, 15, 0.9);"></span> Moderate</div>
+            <div class="legend-item"><span style="background: rgba(230, 126, 34, 0.9);"></span> High</div>
+            <div class="legend-item"><span style="background: rgba(231, 76, 60, 0.9);"></span> Very High</div>
+        `;
     }
 }
 
