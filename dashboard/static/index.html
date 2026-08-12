@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerala Disaster Intelligence Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1>Kerala Disaster Intelligence Dashboard</h1>
+            <div class="header-actions">
+                <button id="open-guide-btn" class="guide-btn" title="Monsoon Guide & FAQ">📖 Safety Guide</button>
+                <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Welcome / Monsoon Guide Landing Screen -->
+    <div id="landing-screen" class="landing-screen">
+        <div class="landing-container glass-panel">
+            <header class="landing-header">
+                <div class="landing-title">
+                    <span class="badge-pill">🛡️ Kerala Monsoon Guide</span>
+                    <h1 id="landing-main-title">Monsoon Safety & Disaster Intelligence</h1>
+                    <p id="landing-subtitle">Essential answers for citizens during extreme rainfall & monsoon season</p>
+                </div>
+                <!-- Language Toggle Switch -->
+                <div class="lang-switch-container">
+                    <span class="lang-label" id="lang-label-text">Language:</span>
+                    <div class="lang-toggle-btn" id="lang-toggle-btn">
+                        <button class="lang-opt active" data-lang="en">English</button>
+                        <button class="lang-opt" data-lang="ml">മലയാളം</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- FAQ Grid -->
+            <div class="faq-grid" id="faq-grid">
+                <!-- FAQ Item 1 -->
+                <div class="faq-card">
+                    <div class="faq-number">01</div>
+                    <div class="faq-body">
+                        <h3 class="faq-q" data-en="Why does the map show red/orange areas near me when it is only drizzling today?"
+                                         data-ml="ഇന്ന് ചെറിയ മഴ മാത്രമേയുള്ളൂവെങ്കിലും എൻ്റെ പ്രദേശത്ത് ചുവപ്പ്/ഓറഞ്ച് നിറം കാണിക്കുന്നത് എന്തുകൊണ്ടാണ്?">
+                            Why does the map show red/orange areas near me when it is only drizzling today?
+                        </h3>
+                        <p class="faq-a" data-en="The map shows two metrics: Active Risk (today's rain) and Terrain Vulnerability (natural soil and slope). Even if today is light rain, red/orange zones highlight steep hills or low-lying areas that could become dangerous during heavy downpours."
+                                        data-ml="ഈ ഡാഷ്‌ബോർഡ് രണ്ട് കാര്യങ്ങൾ കാണിക്കുന്നു: ആക്ടീവ് റിസ്ക് (ഇന്നത്തെ മഴ) കൂടാതെ ടെറൈൻ വൾനറബിലിറ്റി (പ്രകൃതിദത്തമായ ചരിവും മണ്ണും). ഇന്ന് നേരിയ മഴയാണെങ്കിലും, കനത്ത മഴ പെയ്യുമ്പോൾ അപകടസാധ്യതയുള്ള സ്ലോപ്പുകളും താഴ്ന്ന പ്രദേശങ്ങളുമാണ് ചുവപ്പ്/ഓറഞ്ച് നിറത്തിൽ കാണിക്കുന്നത്.">
+                            The map shows two metrics: Active Risk (today's rain) and Terrain Vulnerability (natural soil and slope). Even if today is light rain, red/orange zones highlight steep hills or low-lying areas that could become dangerous during heavy downpours.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-card">
+                    <div class="faq-number">02</div>
+                    <div class="faq-body">
+                        <h3 class="faq-q" data-en="How can I check if my area will face flood or landslide risk tomorrow or in 48 hours?"
+                                         data-ml="അടുത്ത 24 അല്ലെങ്കിൽ 48 മണിക്കൂറിനുള്ളിൽ എൻ്റെ പ്രദേശത്ത് വെള്ളപ്പൊക്കമോ ഉരുൾപൊട്ടലോ ഉണ്ടാകുമോ എന്ന് എങ്ങനെ അറിയാം?">
+                            How can I check if my area will face flood or landslide risk tomorrow or in 48 hours?
+                        </h3>
+                        <p class="faq-a" data-en="Select your location in the search bar, then click the forecast dropdown (24 Hours, 48 Hours, or 72 Hours). The dashboard uses IMD rainfall forecasts to calculate future Active Risk scores and update the map overlay."
+                                        data-ml="സെർച്ച് ബാറിൽ നിങ്ങളുടെ സ്ഥലം നൽകിയ ശേഷം, അതിനടുത്തുള്ള സമയ ഓപ്ഷനിൽ നിന്ന് (24 Hours, 48 Hours, അല്ലെങ്കിൽ 72 Hours) തിരഞ്ഞെടുക്കുക. കാലാവസ്ഥാ പ്രവചനത്തിൻ്റെ അടിസ്ഥാനത്തിൽ വരാനിരിക്കുന്ന സമയങ്ങളിലെ അപകടസാധ്യത സിസ്റ്റം കണക്കാക്കി മാപ്പിൽ കാണിച്ചുതരും.">
+                            Select your location in the search bar, then click the forecast dropdown (24 Hours, 48 Hours, or 72 Hours). The dashboard uses IMD rainfall forecasts to calculate future Active Risk scores and update the map overlay.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-card">
+                    <div class="faq-number">03</div>
+                    <div class="faq-body">
+                        <h3 class="faq-q" data-en="What does it mean if a nearby dam shows a 'RED Alert' badge?"
+                                         data-ml="അടുത്തുള്ള ഡാമിൽ 'RED Alert' എന്ന് കാണിച്ചാൽ എന്താണ് അർത്ഥമാക്കുന്നത്?">
+                            What does it mean if a nearby dam shows a 'RED Alert' badge?
+                        </h3>
+                        <p class="faq-a" data-en="A RED Alert means the dam's water level has reached its maximum threshold, and excess water may be released through spillways. If you live downstream or near riverbanks, prepare to move to safer locations as advised by local authorities."
+                                        data-ml="ഡാമിലെ വെള്ളം പരമാവധി സംഭരണ ശേഷിയിൽ എത്തിയിട്ടുണ്ടെന്നും, സ്പിൽവേ ഗേറ്റുകളിലൂടെ വെള്ളം പുഴയിലേക്ക് തുറന്നുവിടാൻ സാധ്യതയുണ്ടെന്നുമാണ് RED Alert അർത്ഥമാക്കുന്നത്. പുഴയോരങ്ങളിൽ താമസിക്കുന്നവർ പ്രാദേശിക അധികാരികളുടെ നിർദ്ദേശാനുസരണം സുരക്ഷിത സ്ഥാനങ്ങളിലേക്ക് മാറാൻ തയ്യാറാകണം.">
+                            A RED Alert means the dam's water level has reached its maximum threshold, and excess water may be released through spillways. If you live downstream or near riverbanks, prepare to move to safer locations as advised by local authorities.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-card">
+                    <div class="faq-number">04</div>
+                    <div class="faq-body">
+                        <h3 class="faq-q" data-en="Who should I contact immediately if floodwaters start rising near my house?"
+                                         data-ml="വീടിനടുത്ത് വെള്ളം ഉയരാൻ തുടങ്ങിയാൽ ഞാൻ ആരെയാണ് ഉടൻ ബന്ധപ്പെടേണ്ടത്?">
+                            Who should I contact immediately if floodwaters start rising near my house?
+                        </h3>
+                        <p class="faq-a" data-en="Use the Emergency Contacts section on the dashboard to quickly call local emergency services: Dist. EOC / IMD (1077), Fire & Rescue (101), Police (100), Ambulance (108), or NDRF (011-24363260)."
+                                        data-ml="ഡാഷ്‌ബോർഡിലെ എമർജൻസി കോൺടാക്റ്റുകൾ ഉപയോഗിച്ച് ഉടൻ വിളിക്കുക: ഡിസ്ട്രിക്റ്റ് എമർജൻസി ഓപ്പറേഷൻസ് സെൻ്റർ / IMD (1077), ഫയർ സർവീസ് (101), പോലീസ് (100), ആംബുലൻസ് (108), അല്ലെങ്കിൽ NDRF (011-24363260).">
+                            Use the Emergency Contacts section on the dashboard to quickly call local emergency services: Dist. EOC / IMD (1077), Fire & Rescue (101), Police (100), Ambulance (108), or NDRF (011-24363260).
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-card">
+                    <div class="faq-number">05</div>
+                    <div class="faq-body">
+                        <h3 class="faq-q" data-en="Can I search for any town or village in Kerala on this dashboard?"
+                                         data-ml="കേരളത്തിലെ ഏത് ഗ്രാമവും നഗരവും ഈ ഡാഷ്‌ബോർഡിൽ തിരയാൻ കഴിയുമോ?">
+                            Can I search for any town or village in Kerala on this dashboard?
+                        </h3>
+                        <p class="faq-a" data-en="Yes, you can type any location within Kerala (e.g., Munnar, Wayanad, Chalakudy, Valavoor). If you search outside Kerala, the system will remind you to search within Kerala boundaries for accurate predictions."
+                                        data-ml="ഉവ്വ്, കേരളത്തിലെ ഏത് സ്ഥലവും (മൂന്നാർ, വയനാട്, ചാലക്കുടി, വളവൂർ മുതലായവ) സെർച്ച് ബാറിൽ ടൈപ്പ് ചെയ്യാം. കേരളത്തിന് പുറത്തുള്ള സ്ഥലങ്ങൾ തിരഞ്ഞാൽ, കേരളത്തിനുള്ളിലെ സ്ഥലങ്ങൾ മാത്രം തിരയാൻ സിസ്റ്റം മുന്നറിയിപ്പ് നൽകും.">
+                            Yes, you can type any location within Kerala (e.g., Munnar, Wayanad, Chalakudy, Valavoor). If you search outside Kerala, the system will remind you to search within Kerala boundaries for accurate predictions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action CTA -->
+            <div class="landing-footer">
+                <button id="enter-dashboard-btn" class="btn-primary cta-btn">
+                    <span id="cta-text">Proceed to Live Dashboard →</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <section class="search-section">
+        <form id="search-form" class="search-form">
+            <select id="map-type-select" class="forecast-select" style="margin-right: 0.5rem; background: rgba(30, 144, 255, 0.1); border-color: var(--accent-blue);">
+                <option value="active">Active Risk Map</option>
+                <option value="terrain">Terrain Vuln. Map</option>
+            </select>
+            <input type="text" id="place-input" placeholder="Enter a location in Kerala (e.g. Munnar, Idukki)" required autocomplete="off">
+            <select id="forecast-select" class="forecast-select">
+                <option value="0">Current</option>
+                <option value="24">24 Hours</option>
+                <option value="48">48 Hours</option>
+                <option value="72">72 Hours</option>
+            </select>
+            <button type="submit" class="btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                Analyze Risk
+            </button>
+        </form>
+    </section>
+
+    <main class="dashboard-main">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <aside class="side-panel">
+            <div class="panel-card weather-card">
+                <h2>Live Weather</h2>
+                <div id="weather-grid" class="weather-grid">
+                    <div class="weather-item">
+                        <span class="w-icon">🌡️</span>
+                        <div class="w-info">
+                            <span class="w-label">Temperature</span>
+                            <span class="w-value" id="val-temp">--°C</span>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <span class="w-icon">💧</span>
+                        <div class="w-info">
+                            <span class="w-label">Humidity</span>
+                            <span class="w-value" id="val-humidity">--%</span>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <span class="w-icon">🌧️</span>
+                        <div class="w-info">
+                            <span class="w-label">Peak Rain (24h)</span>
+                            <span class="w-value" id="val-rain">-- mm/h</span>
+                        </div>
+                    </div>
+                    <div class="weather-item">
+                        <span class="w-icon">💨</span>
+                        <div class="w-info">
+                            <span class="w-label">Wind</span>
+                            <span class="w-value" id="val-wind">-- m/s</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="weather-desc" class="weather-desc">Awaiting location...</div>
+            </div>
+
+            <div class="panel-card risk-card">
+                <div class="risk-gauges-wrapper">
+                    <!-- Active Risk Gauge (Dynamic) -->
+                    <div class="gauge-group">
+                        <h3>Active Risk</h3>
+                        <div class="gauge-container">
+                            <svg class="risk-gauge" viewBox="0 0 120 120">
+                                <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                                <circle class="gauge-fill" id="risk-gauge-fill" cx="60" cy="60" r="50"></circle>
+                            </svg>
+                            <div class="gauge-center">
+                                <span id="risk-score-value">0</span><span class="percent">%</span>
+                            </div>
+                        </div>
+                        <div id="risk-level-text" class="risk-level-text" style="margin-top:0.5rem; font-size:0.9rem;">LOW RISK</div>
+                    </div>
+
+                    <!-- Terrain Vulnerability Gauge (Static) -->
+                    <div class="gauge-group">
+                        <h3 style="color:#667788;">Terrain Vuln.</h3>
+                        <div class="gauge-container">
+                            <svg class="risk-gauge" viewBox="0 0 120 120">
+                                <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+                                <circle class="gauge-fill" id="terrain-gauge-fill" cx="60" cy="60" r="50" style="stroke:#8899aa;"></circle>
+                            </svg>
+                            <div class="gauge-center">
+                                <span id="terrain-score-value" style="color:#8899aa;">0</span><span class="percent" style="color:#8899aa;">%</span>
+                            </div>
+                        </div>
+                        <div class="risk-level-text" style="margin-top:0.5rem; font-size:0.8rem; color:#667788;">STATIC BASELINE</div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary);">
+                    Model Confidence: <span id="confidence-score-value">--</span>%
+                </div>
+            </div>
+
+            <div class="panel-card dams-card">
+                <h2>Dam Water Levels</h2>
+                <div id="dams-list" class="dams-list">
+                    <div class="loading-text">Loading dam data...</div>
+                </div>
+            </div>
+
+            <div class="panel-card alerts-card">
+                <h2>IMD Weather Warnings</h2>
+                <div id="alerts-list" class="alerts-list accordion">
+                    <div class="loading-text">Loading alerts...</div>
+                </div>
+            </div>
+
+            <div class="panel-card contacts-card">
+                <h2>Emergency Contacts</h2>
+                <div class="contacts-grid">
+                    <a href="tel:100" class="contact-btn">Police <span>100</span></a>
+                    <a href="tel:101" class="contact-btn">Fire <span>101</span></a>
+                    <a href="tel:108" class="contact-btn">Ambulance <span>108</span></a>
+                    <a href="tel:1077" class="contact-btn">IMD <span>1077</span></a>
+                    <a href="tel:1070" class="contact-btn">Dist. EOC <span>1070</span></a>
+                    <a href="tel:01124363260" class="contact-btn">NDRF <span>011-24363260</span></a>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>Data Sources: IMD, KSEB, OpenWeatherMap, OpenStreetMap | Powered by C.R.E.A.T.E LAB IIITK</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <div id="loading-text" class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-modal-btn" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label for="owm-api-key">OpenWeatherMap API Key:</label>
+                <input type="password" id="owm-api-key" placeholder="Enter your OWM API key">
+                <p class="help-text">Required for live weather and risk analysis.</p>
+                <button id="save-settings-btn" class="btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <link rel="stylesheet" href="/static/style.css?v=3">
+    <script src="/static/app.js?v=3" defer></script>
+</body>
+</html>
