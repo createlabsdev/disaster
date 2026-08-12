@@ -541,12 +541,11 @@ async def predict_risk(req: PredictRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Terrain PNG failed: {str(e)}")
 
-    if not siltation_png_path.exists():
-        print(f"  Generating River Siltation & Sediment Map...")
-        try:
-            convert_tif_to_png(str(tif_path), str(siltation_png_path), siltation=True)
-        except Exception as e:
-            print(f"  [WARNING] Siltation PNG failed: {e}")
+    print(f"  Generating River Siltation & Sediment Map...")
+    try:
+        convert_tif_to_png(str(tif_path), str(siltation_png_path), siltation=True)
+    except Exception as e:
+        print(f"  [WARNING] Siltation PNG failed: {e}")
 
     print(f"  Generating Active Risk Map (severity={weather_severity:.2f})...")
     try:
