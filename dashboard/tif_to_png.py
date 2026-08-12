@@ -92,13 +92,14 @@ def probability_to_siltation_rgba(prob_array, nodata=-9999.0, manning_path=None)
     water_mask = None
 
     # Use Manning roughness to precisely isolate water bodies
-    # Open water typically ranges from 0.020 to 0.050. 
+    # Open water typically ranges from 0.020 to 0.030. 
     # Paved roads are < 0.016 (e.g. 0.011-0.015). We must exclude them.
     if manning_path and os.path.exists(manning_path):
         try:
             with rasterio.open(manning_path) as src:
                 mn = src.read(1).astype(np.float32)
-                raw_water = (mn >= 0.018) & (mn <= 0.060)
+                # 0.018 to 0.030 perfectly isolates the river while excluding roads (<0.018) and agriculture (>0.030)
+                raw_water = (mn >= 0.018) & (mn <= 0.030)
                 if np.sum(raw_water) > 10:
                     water_mask = raw_water
         except Exception:
