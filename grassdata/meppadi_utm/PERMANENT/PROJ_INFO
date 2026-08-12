@@ -1,0 +1,6 @@
+name: WGS 84 / UTM zone 43N
+datum: wgs84
+ellps: wgs84
+proj: utm
+zone: 43
+no_defs: defined

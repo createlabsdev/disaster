@@ -1,0 +1,79 @@
+======================================================================
+SUSCEPTIBILITY MODEL REPORT
+======================================================================
+
+--- RandomForest ---
+  Spatial CV Mean AUC: 0.9476 ± 0.0161
+  Overall AUC:         0.9495
+  Accuracy:            0.9344
+  Precision:           0.3625
+  Recall:              0.7893
+  F1-Score:            0.4969
+
+  Confusion Matrix:
+                 Predicted 0   Predicted 1
+    Actual 0          72873         4598
+    Actual 1            698         2615
+
+  Per-Fold Results:
+    Fold 1: AUC=0.9546  Acc=0.9396  Prec=0.4371  Rec=0.7832  F1=0.5610  (train=64586, test=16198)
+    Fold 2: AUC=0.9756  Acc=0.9384  Prec=0.4654  Rec=0.8862  F1=0.6103  (train=64623, test=16161)
+    Fold 3: AUC=0.9298  Acc=0.9371  Prec=0.2252  Rec=0.6727  F1=0.3375  (train=64603, test=16181)
+    Fold 4: AUC=0.9379  Acc=0.9303  Prec=0.3920  Rec=0.7478  F1=0.5144  (train=64809, test=15975)
+    Fold 5: AUC=0.9400  Acc=0.9267  Prec=0.2490  Rec=0.7835  F1=0.3779  (train=64515, test=16269)
+
+  Top 15 Feature Importances (RandomForest):
+     1. elevation                       0.244225
+     2. manning_n                       0.116243
+     3. c_factor                        0.084625
+     4. soil_depth                      0.084522
+     5. landcover_10                    0.083647
+     6. rusle_soil_loss                 0.078837
+     7. landcover_40                    0.053687
+     8. slope                           0.052719
+     9. twi                             0.032631
+    10. landcover_90                    0.031506
+    11. dist_to_stream                  0.029353
+    12. profile_curvature               0.028275
+    13. aspect                          0.022975
+    14. plan_curvature                  0.022571
+    15. landcover_50                    0.020065
+
+--- XGBoost ---
+  Spatial CV Mean AUC: 0.9477 ± 0.0171
+  Overall AUC:         0.9490
+  Accuracy:            0.9613
+  Precision:           0.5208
+  Recall:              0.7184
+  F1-Score:            0.6038
+
+  Confusion Matrix:
+                 Predicted 0   Predicted 1
+    Actual 0          75281         2190
+    Actual 1            933         2380
+
+  Per-Fold Results:
+    Fold 1: AUC=0.9555  Acc=0.9633  Prec=0.6147  Rec=0.6817  F1=0.6465  (train=64586, test=16198)
+    Fold 2: AUC=0.9764  Acc=0.9691  Prec=0.6641  Rec=0.8726  F1=0.7542  (train=64623, test=16161)
+    Fold 3: AUC=0.9305  Acc=0.9632  Prec=0.3495  Rec=0.6364  F1=0.4512  (train=64603, test=16181)
+    Fold 4: AUC=0.9310  Acc=0.9544  Prec=0.5345  Rec=0.5995  F1=0.5651  (train=64809, test=15975)
+    Fold 5: AUC=0.9451  Acc=0.9567  Prec=0.3718  Rec=0.7597  F1=0.4993  (train=64515, test=16269)
+
+  Top 15 Feature Importances (XGBoost):
+     1. landcover_50                    0.260883
+     2. landcover_40                    0.181343
+     3. landcover_10                    0.140457
+     4. manning_n                       0.118566
+     5. landcover_90                    0.099089
+     6. elevation                       0.051384
+     7. soil_depth                      0.025453
+     8. c_factor                        0.022377
+     9. landcover_30                    0.018636
+    10. k_factor                        0.012194
+    11. rusle_soil_loss                 0.008933
+    12. dist_to_stream                  0.008265
+    13. slope                           0.007720
+    14. avaflow_velocity                0.007004
+    15. factor_of_safety                0.006803
+
+======================================================================

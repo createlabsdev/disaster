@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE task SYSTEM "grass-interface.dtd">
+<task name="r.avaflow.40G">
+	<description>
+		The mass flow simulation tool
+	</description>
+	<keywords>
+		Raster, Landslide, Numerical simulation
+	</keywords>
+	<parameter name="prefix" type="string" required="no" multiple="no">
+		<description>
+			Prefix for output files and folders
+		</description>
+	</parameter>
+	<parameter name="cores" type="string" required="no" multiple="no">
+		<description>
+			Number of cores to be used for multiple model runs
+		</description>
+	</parameter>
+	<parameter name="cellsize" type="string" required="no" multiple="no">
+		<description>
+			Cell size in metres
+		</description>
+	</parameter>
+	<parameter name="phases" type="string" required="no" multiple="no">
+		<description>
+			Number of phases (1 = single-phase model, 3 = multi-phase model)
+		</description>
+	</parameter>
+	<parameter name="gravity" type="string" required="no" multiple="no">
+		<description>
+			Gravity (m/s2)
+		</description>
+	</parameter>
+	<parameter name="limiter" type="string" required="no" multiple="no">
+		<description>
+			Numerical limiter (1 = Minmod limiter, 2 = Superbee limiter, 3 = Woodward limiter, 4 = van Leer limiter)
+		</description>
+	</parameter>
+	<parameter name="clayers" type="string" required="no" multiple="no">
+		<description>
+			Layer control (0 = of, 1 = on)
+		</description>
+	</parameter>
+	<parameter name="ctopo" type="string" required="no" multiple="no">
+		<description>
+			Input and output of flow heights and velocities (0=vertical, 1=slope-normal)
+		</description>
+	</parameter>
+	<parameter name="csurface" type="string" required="no" multiple="no">
+		<description>
+			Surface control (0 = off, 1 = edge control, 2 = force balancing)
+		</description>
+	</parameter>
+	<parameter name="centrainment" type="string" required="no" multiple="no">
+		<description>
+			// Entrainment control (0 = off, 1=on)
+		</description>
+	</parameter>
+	<parameter name="cstopping" type="string" required="no" multiple="no">
+		<description>
+			// Stopping control (0 = off, 1-3 = type of approach)
+		</description>
+	</parameter>
+	<parameter name="cdispersion" type="string" required="no" multiple="no">
+		<description>
+			// Dispersion control (0 = off, 1 = on)
+		</description>
+	</parameter>
+	<parameter name="cmelt" type="string" required="no" multiple="no">
+		<description>
+			// Melt control (0 = off, 1 = on)
+		</description>
+	</parameter>
+	<parameter name="aoicoords" type="string" required="no" multiple="yes">
+		<description>
+			Set of coordinates delineating area of interest (N,S,E,W)
+		</description>
+	</parameter>
+	<parameter name="elevation" type="string" required="no" multiple="no">
+		<description>
+			Name of elevation raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hrelease" type="string" required="no" multiple="no">
+		<description>
+			Name of release height raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="rhrelease1" type="string" required="no" multiple="yes">
+		<description>
+			Ratio(s) of PHASE 1 release height (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="vhrelease" type="string" required="no" multiple="yes">
+		<description>
+			Variation of release height (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="hrelease1" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 1 release height raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hrelease2" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 2 release height raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hrelease3" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 3 release height raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="trelease" type="string" required="no" multiple="no">
+		<description>
+			Release time raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="trelstop" type="string" required="no" multiple="no">
+		<description>
+			Release hydrograph stop time raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="tslide" type="string" required="no" multiple="no">
+		<description>
+			Time of initial sliding raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="tstop" type="string" required="no" multiple="no">
+		<description>
+			Stopping time raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="zones" type="string" required="no" multiple="no">
+		<description>
+			Zones raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="cell" />
+	</parameter>
+	<parameter name="impactarea" type="string" required="no" multiple="no">
+		<description>
+			Name of observed impact area raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="cell" />
+	</parameter>
+	<parameter name="hdeposit" type="string" required="no" multiple="no">
+		<description>
+			Name of observed deposit height raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="vinx" type="string" required="no" multiple="no">
+		<description>
+			Name of release velocity in x direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="viny" type="string" required="no" multiple="no">
+		<description>
+			Name of release velocity in y direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="vinx1" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 1 release velocity in x direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="viny1" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 1 release velocity in y direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="vinx2" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 2 release velocity in x direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="viny2" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 2 release velocity in y direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="vinx3" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 3 release velocity in x direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="viny3" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 3 release velocity in y direction raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hentrmax" type="string" required="no" multiple="no">
+		<description>
+			Name of maximum height of entrainment raster map (comma-separated)
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="rhentrmax1" type="string" required="no" multiple="no">
+		<description>
+			Ratio(s) of maximum height of PHASE 1 entrainment (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="vhentrmax" type="string" required="no" multiple="yes">
+		<description>
+			Variation of maximum height of entrainment (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="hentrmax1" type="string" required="no" multiple="no">
+		<description>
+			Name of maximum height of PHASE 1 entrainment raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hentrmax2" type="string" required="no" multiple="no">
+		<description>
+			Name of maximum height of PHASE 2 entrainment raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="hentrmax3" type="string" required="no" multiple="no">
+		<description>
+			Name of maximum height of PHASE 3 entrainment raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="phi1" type="string" required="no" multiple="no">
+		<description>
+			Name of internal friction angle of PHASE 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="phi2" type="string" required="no" multiple="no">
+		<description>
+			Name of internal friction angle of PHASE 2 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="phi3" type="string" required="no" multiple="no">
+		<description>
+			Name of internal friction angle of PHASE 3 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="delta1" type="string" required="no" multiple="no">
+		<description>
+			Name of basal friction angle of PHASE 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="delta2" type="string" required="no" multiple="no">
+		<description>
+			Name of basal friction angle of PHASE 2 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="delta3" type="string" required="no" multiple="no">
+		<description>
+			Name of basal friction angle of PHASE 3 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="addfri1" type="string" required="no" multiple="no">
+		<description>
+			Name of additional friction parameter of phase 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="addfri2" type="string" required="no" multiple="no">
+		<description>
+			Name of additional friction parameter of phase 2 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="addfri3" type="string" required="no" multiple="no">
+		<description>
+			Name of additional friction parameter of phase 3 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="coh1" type="string" required="no" multiple="no">
+		<description>
+			Name of cohesion of phase 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="coh2" type="string" required="no" multiple="no">
+		<description>
+			Name of cohesion of phase 2 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="coh3" type="string" required="no" multiple="no">
+		<description>
+			Name of cohesion of phase 3 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ny1" type="string" required="no" multiple="no">
+		<description>
+			Name of viscosity of PHASE 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ny2" type="string" required="no" multiple="no">
+		<description>
+			Name of viscosity of PHASE 2 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ny3" type="string" required="no" multiple="no">
+		<description>
+			Name of viscosity of PHASE 3 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="cdeform" type="string" required="no" multiple="no">
+		<description>
+			Name of deformation coefficient of PHASE 1 raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="zfrag" type="string" required="no" multiple="no">
+		<description>
+			Name of fragmentation zones raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ambdrag" type="string" required="no" multiple="no">
+		<description>
+			Name of ambient drag coefficient raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="centr" type="string" required="no" multiple="no">
+		<description>
+			Name of entrainment coefficient raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ctrans12" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 1-PHASE 2 transformation coefficient raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ctrans13" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 1-PHASE 3 transformation coefficient raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="ctrans23" type="string" required="no" multiple="no">
+		<description>
+			Name of PHASE 2-PHASE 3 transformation coefficient raster map
+		</description>
+		<gisprompt age="old" element="raster" prompt="dcell" />
+	</parameter>
+	<parameter name="density" type="string" required="no" multiple="yes">
+		<description>
+			Density parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="friction" type="string" required="no" multiple="yes">
+		<description>
+			Friction parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="cohesion" type="string" required="no" multiple="yes">
+		<description>
+			Cohesion parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="viscosity" type="string" required="no" multiple="yes">
+		<description>
+			Viscosity parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="deformation" type="string" required="no" multiple="yes">
+		<description>
+			Deformation parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="slidepar" type="string" required="no" multiple="yes">
+		<description>
+			Parameters for initial sliding (exponent for weighting, coefficient for deformation)
+		</description>
+	</parameter>
+	<parameter name="shearing" type="string" required="no" multiple="no">
+		<description>
+			Strength of frictional energy loss in shearing
+		</description>
+	</parameter>
+	<parameter name="fragmentation" type="string" required="no" multiple="yes">
+		<description>
+			Fragmentation parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="ambient" type="string" required="no" multiple="no">
+		<description>
+			Ambient drag coefficient
+		</description>
+	</parameter>
+	<parameter name="entrainment" type="string" required="no" multiple="yes">
+		<description>
+			Entrainment and stopping parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="drag" type="string" required="no" multiple="yes">
+		<description>
+			Drag parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="virtualmass" type="string" required="no" multiple="yes">
+		<description>
+			Virtual mass parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="transformation" type="string" required="no" multiple="yes">
+		<description>
+			Phase transformation parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="melting" type="string" required="no" multiple="yes">
+		<description>
+			Temperature evolution and ice melting parameters (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="hydrograph" type="string" required="no" multiple="yes">
+		<description>
+			Path(es) to hydrograph file(s)
+		</description>
+	</parameter>
+	<parameter name="hydrocoords" type="string" required="no" multiple="yes">
+		<description>
+			Pairs of coordinates of hydrograph(s) (x1, y1, x2, y2, ...)
+		</description>
+	</parameter>
+	<parameter name="adaptograph" type="string" required="no" multiple="no">
+		<description>
+			Path(es) to adaptograph file(s)
+		</description>
+	</parameter>
+	<parameter name="frictiograph" type="string" required="no" multiple="no">
+		<description>
+			Path(es) to frictiograph file(s)
+		</description>
+	</parameter>
+	<parameter name="transformograph" type="string" required="no" multiple="no">
+		<description>
+			Path(es) to transformograph file(s)
+		</description>
+	</parameter>
+	<parameter name="sampling" type="string" required="no" multiple="no">
+		<description>
+			Type of parameter sampling (positive number = random, 0 = controlled, negative number = OAT)
+		</description>
+	</parameter>
+	<parameter name="cfl" type="string" required="no" multiple="yes">
+		<description>
+			CFL criterion, initial time step length (s)
+		</description>
+	</parameter>
+	<parameter name="time" type="string" required="no" multiple="yes">
+		<description>
+			Time interval (s), stop for writing output (s)
+		</description>
+	</parameter>
+	<parameter name="slomo" type="string" required="no" multiple="yes">
+		<description>
+			Parameters for slow motion (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="thresholds" type="string" required="no" multiple="yes">
+		<description>
+			Lower thresholds for display of flow height, velocity, kinetic energy, and pressure (comma-separated)
+		</description>
+	</parameter>
+	<parameter name="profile" type="string" required="no" multiple="yes">
+		<description>
+			Pairs of coordinates for profile plots (x1,y1,x2,y2,...)
+		</description>
+	</parameter>
+	<parameter name="ctrlpoints" type="string" required="no" multiple="yes">
+		<description>
+			Pairs of coordinates for control points (x1,y1,x2,y2,...)
+		</description>
+	</parameter>
+	<parameter name="reftime" type="string" required="no" multiple="yes">
+		<description>
+			Reference time of reach for each control point (t1,t2,...)
+		</description>
+	</parameter>
+	<parameter name="phexagg" type="string" required="no" multiple="no">
+		<description>
+			Exaggeration of flow height in profile plots
+		</description>
+	</parameter>
+	<parameter name="orthophoto" type="string" required="no" multiple="no">
+		<description>
+			Path to orthophoto tiff image
+		</description>
+	</parameter>
+	<parameter name="visualization" type="string" required="no" multiple="yes">
+		<description>
+			Parameters for visualization
+		</description>
+	</parameter>
+	<flag name="a">
+		<description>
+			Map plots of pressure and kinetic energy
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="e">
+		<description>
+			Model execution
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="k">
+		<description>
+			Keep result GRASS raster maps
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="m">
+		<description>
+			Multiple model runs
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="t">
+		<description>
+			Map plots of impact wave or tsunami height
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="v">
+		<description>
+			Evaluation and visualization
+		</description>
+ 		<guisection>
+			flags
+		</guisection>
+	</flag>
+	<flag name="help">
+		<description>
+			Print usage summary
+		</description>
+	</flag>
+	<flag name="verbose">
+		<description>
+			Verbose module output
+		</description>
+	</flag>
+	<flag name="quiet">
+		<description>
+			Quiet module output
+		</description>
+	</flag>
+</task>

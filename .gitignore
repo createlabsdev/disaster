@@ -1,32 +1,7 @@
-# Python
+# Virtual environment & Python bytecode only
 __pycache__/
 *.py[cod]
 *$py.class
 env/
 .venv/
 venv/
-
-# Large GIS, Binaries & Data Files
-*.tif
-*.tiff
-*.zip
-*.hdr
-*.tfw
-*.sww
-*.aux.xml
-*.xml
-r.avaflow.40G/
-srtm_*/
-trigrs/
-
-# Generated Outputs & Temporary Directories
-output/
-grassdata/
-avaflow_runs/
-*_dbf_results/
-soil_*/
-dashboard/risk_map_results/
-
-# Temporary / Scratch scripts
-scratch_*.py
-test_dams.py

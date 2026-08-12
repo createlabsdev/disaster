@@ -1,0 +1,4 @@
+file: /home/emersion/digital_twin/output/meppadi/dem_ref.tif
+band: 1
+null: -32768
+type: 3
