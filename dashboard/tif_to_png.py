@@ -173,6 +173,92 @@ def convert_tif_to_png(tif_path, png_path, nodata=-9999.0, absolute=False, multi
     print(f"  Converted {tif_path} → {png_path}")
     return bbox
 
+def generate_live_turbidity_png(bbox_list, manning_path, png_path):
+    """
+    Fetch the latest Sentinel-2 L2A image, compute NDTI, mask it with water, and save as PNG.
+    bbox_list: [west, south, east, north]
+    """
+    try:
+        import os
+        import numpy as np
+        from PIL import Image
+        import pystac_client
+        import planetary_computer as pc
+        import stackstac
+        import xarray as xr
+        
+        west, south, east, north = bbox_list
+        catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1", modifier=pc.sign_inplace)
+        
+        # Search last 30 days
+        search = catalog.search(
+            collections=["sentinel-2-l2a"],
+            bbox=[west, south, east, north],
+            datetime="2024-01-01/2026-12-31",
+            query={"eo:cloud_cover": {"lt": 30}},
+            limit=1
+        )
+        items = list(search.items())
+        if not items:
+            print("  [Sentinel-2] No clear imagery found recently.")
+            return False
+            
+        item = items[0]
+        print(f"  [Sentinel-2] Processing image from {item.datetime}...")
+        
+        # Read Red, Green, and SCL (Scene Classification Layer)
+        stack = stackstac.stack(
+            item,
+            assets=["B04", "B03", "SCL"],
+            bounds_latlon=[west, south, east, north],
+            resolution=10
+        ).squeeze()
+        
+        data = stack.compute().values
+        red = data[0].astype(float)
+        green = data[1].astype(float)
+        scl = data[2]
+        
+        # SCL class 6 is Water
+        water_mask = (scl == 6)
+        
+        if not np.any(water_mask):
+            print("  [Sentinel-2] No water found in this image.")
+            return False
+            
+        # NDTI = (Red - Green) / (Red + Green)
+        denom = red + green
+        ndti = np.zeros_like(red)
+        valid = (denom > 0) & water_mask
+        ndti[valid] = (red[valid] - green[valid]) / denom[valid]
+        
+        # Normalize NDTI roughly from [-0.2, 0.2] to [0, 1] for coloring
+        norm = (ndti - (-0.2)) / 0.4
+        norm = np.clip(norm, 0, 1)
+        
+        # Build RGBA array
+        h, w = red.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        
+        import matplotlib.pyplot as plt
+        cmap = plt.get_cmap('YlOrBr')
+        colors = cmap(norm) * 255
+        
+        rgba[valid, 0] = colors[valid, 0]
+        rgba[valid, 1] = colors[valid, 1]
+        rgba[valid, 2] = colors[valid, 2]
+        rgba[valid, 3] = 200  # Semi-transparent overlay
+        
+        img = Image.fromarray(rgba, mode='RGBA')
+        os.makedirs(os.path.dirname(png_path) or '.', exist_ok=True)
+        img.save(png_path, 'PNG')
+        print(f"  [Sentinel-2] Saved live turbidity map to {png_path}")
+        return True
+        
+    except Exception as e:
+        print(f"  [Sentinel-2 Error] {str(e)}")
+        return False
+
 
 def compute_overall_risk_score(tif_path, nodata=-9999.0):
     """

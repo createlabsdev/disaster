@@ -542,9 +542,14 @@ async def predict_risk(req: PredictRequest):
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Terrain PNG failed: {str(e)}")
 
-    print(f"  Generating River Siltation & Sediment Map...")
+    print(f"  Generating Live Sentinel-2 Turbidity Map...")
     try:
-        convert_tif_to_png(str(tif_path), str(siltation_png_path), siltation=True)
+        from tif_to_png import generate_live_turbidity_png
+        # Always run live siltation for new areas using global SCL
+        success = generate_live_turbidity_png([west, south, east, north], None, str(siltation_png_path))
+        if not success:
+            # Fallback to AI modeled siltation if live fetch fails
+            convert_tif_to_png(str(tif_path), str(siltation_png_path), siltation=True)
     except Exception as e:
         print(f"  [WARNING] Siltation PNG failed: {e}")
 
